@@ -33,11 +33,11 @@ CREATE TABLE `Association` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-INSERT INTO `Association` (`id`, `name`, `description`, `points`, `image`) VALUES
+INSERT INTO `Association`(`id`, `name`, `description`, `points`, `image`) VALUES
 (1,	'Ocean Cleanup',	'Association dédiée au nettoyage des océans et à la protection de la vie marine.',	100,	'🌊'),
 (2,	'Forest Guardians',	'Protection des forêts et reforestation à travers le monde.',	150,	'🌳'),
 (3,	'Wildlife Protectors',	'Protection des espèces menacées et préservation de leur habitat.',	200,	'🦁'),
-(4,	'Clean Air Initiative',	'Lutte contre la pollution de l\'air et promotion des énergies propres.',	120,	'🌬️');
+(4,	'Clean Air Initiative',	'Lutte contre la pollution de l'air et promotion des énergies propres.',	120,	'🌬️');
 
 DROP TABLE IF EXISTS `City`;
 CREATE TABLE `City` (
