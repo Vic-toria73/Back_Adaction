@@ -37,7 +37,7 @@ INSERT INTO `Association`(`id`, `name`, `description`, `points`, `image`) VALUES
 (1,	'Ocean Cleanup',	'Association dédiée au nettoyage des océans et à la protection de la vie marine.',	100,	'🌊'),
 (2,	'Forest Guardians',	'Protection des forêts et reforestation à travers le monde.',	150,	'🌳'),
 (3,	'Wildlife Protectors',	'Protection des espèces menacées et préservation de leur habitat.',	200,	'🦁'),
-(4,	'Clean Air Initiative',	'Lutte contre la pollution de l'air et promotion des énergies propres.',	120,	'🌬️');
+(4,	'Clean Air Initiative',	"Lutte contre la pollution de l\'air et promotion des énergies propres.",	120,	'🌬️');
 
 DROP TABLE IF EXISTS `City`;
 CREATE TABLE `City` (
@@ -58,7 +58,7 @@ INSERT INTO `City` (`id`, `name`, `coordinate_lat`, `coordinate_lng`) VALUES
 (7,	'Strasbourg',	48.5734,	7.7521),
 (8,	'Montpellier',	43.6108,	3.8767),
 (9,	'Bordeaux',	44.8378,	-0.5792),
-(10,	'Lille',	50.6292,	3.0573);
+(10, 'Lille',	50.6292,	3.0573);
 
 DROP TABLE IF EXISTS `Collect`;
 CREATE TABLE `Collect` (

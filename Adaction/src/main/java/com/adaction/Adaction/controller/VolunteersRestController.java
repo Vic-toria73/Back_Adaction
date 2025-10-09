@@ -1,16 +1,22 @@
 package com.adaction.Adaction.controller;
 
 import com.adaction.Adaction.model.Volunteers;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RestController;
+import com.adaction.Adaction.repository.VolunteerRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
 @RestController
+@RequestMapping("/api/volunteers")
 public class VolunteersRestController {
-    @GetMapping("/api/volunteers")
-    public List<String> getVolunteers(){
-        return List.of("Bob");
-    }
 
+    @Autowired
+    private VolunteerRepository volunteerRepository;
+
+    @GetMapping
+    public List<Volunteers> getVolunteers() {
+        // Récupère tous les volontaires depuis la DB via le repository
+        return volunteerRepository.findAll();
+    }
 }

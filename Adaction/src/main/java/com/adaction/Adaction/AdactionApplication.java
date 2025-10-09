@@ -13,11 +13,11 @@ public class AdactionApplication {
         try
         {
             //étape 1: charger la classe driver
-            Class.forName("com.mysql.jdbc.Driver");
+            Class.forName("org.mariadb.jdbc.Driver");
 
             //étape 2: créer l'objet de connexion
             Connection conn = DriverManager.getConnection(
-                    "jdbc:mysql://localhost:3309/emp?useSSL=false", "user", "");
+                    "jdbc:mariadb://localhost:3306/example-database", "user", "mypassword");
 
             //étape 3: créer l'objet statement
             Statement stmt = conn.createStatement();
