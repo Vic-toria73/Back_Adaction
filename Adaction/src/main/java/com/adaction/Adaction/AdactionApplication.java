@@ -1,49 +1,23 @@
 package com.adaction.Adaction;
-
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import java.sql.*;
-
+import org.springframework.context.annotation.Bean;
+import org.springframework.web.servlet.config.annotation.CorsRegistry;
+import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 @SpringBootApplication
 public class AdactionApplication {
-
     public static void main(String[] args) {
         SpringApplication.run(AdactionApplication.class, args);
-        try
-        {
-            //étape 1: charger la classe driver
-            Class.forName("org.mariadb.jdbc.Driver");
-
-            //étape 2: créer l'objet de connexion
-            Connection conn = DriverManager.getConnection(
-                    "jdbc:mariadb://localhost:3306/example-database", "user", "mypassword");
-
-            //étape 3: créer l'objet statement
-            Statement stmt = conn.createStatement();
-            String sql = "SELECT id, nom, age, adresse FROM inscription";
-            ResultSet res = stmt.executeQuery(sql);
-
-            //étape 5: extraire les données
-            while(res.next()){
-                //Récupérer par nom de colonne
-                int id = res.getInt("id");
-                String nom = res.getString("nom");
-                int age = res.getInt("age");
-                String adresse = res.getString("adresse");
-
-                //Afficher les valeurs
-                System.out.print("ID: " + id);
-                System.out.print(", Nom: " + nom);
-                System.out.print(", Age: " + age);
-                System.out.println(", Adresse: " + adresse);
+    }
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**")
+                        .allowedOrigins("http://http://localhost:5173/");
             }
-
-            //étape 6: fermez l'objet de connexion
-            conn.close();
-        }
-        catch(Exception e){
-            System.out.println(e);
-        }
+        };
     }
 }

@@ -9,14 +9,18 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/volunteers")
+@CrossOrigin(origins = "http://localhost:5173")
+
 public class VolunteersRestController {
-
+    private final VolunteerRepository volunteerRepository;
     @Autowired
-    private VolunteerRepository volunteerRepository;
+    public VolunteersRestController(VolunteerRepository volunteerRepository) {
+        this.volunteerRepository = volunteerRepository;
 
+
+    }
     @GetMapping
     public List<Volunteers> getVolunteers() {
-        // Récupère tous les volontaires depuis la DB via le repository
         return volunteerRepository.findAll();
     }
 }
