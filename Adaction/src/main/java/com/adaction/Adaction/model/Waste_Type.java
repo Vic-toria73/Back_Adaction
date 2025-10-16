@@ -1,8 +1,6 @@
 package com.adaction.Adaction.model;
 
 
-
-
 public class Waste_Type {
     private int id;
     private String value;

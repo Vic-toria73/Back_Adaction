@@ -2,17 +2,21 @@ package com.adaction.Adaction.repository;
 
 
 import com.adaction.Adaction.model.City;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Repository;
+import org.springframework.web.bind.annotation.CrossOrigin;
 
+import javax.sql.DataSource;
 import java.sql.*;
 
 @Repository
 public class CityRepository {
+    private final DataSource dataSource;
 
-    private static final String URL = "jdbc:mariadb://localhost:3309/example-database";
-    private static final String USER = "user";
-    private static final String PASSWORD = "mypassword";
-
+    @Autowired
+    public CityRepository(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
 
     // Récupère une ville
     public City findById(int cityId) {
@@ -20,7 +24,7 @@ public class CityRepository {
 
         String sql = "SELECT * FROM City WHERE id = ?";
 
-        try (Connection con = DriverManager.getConnection(URL, USER, PASSWORD);
+        try (Connection con = dataSource.getConnection();
              PreparedStatement ps = con.prepareStatement(sql)) {
 
             ps.setInt(1, cityId);
@@ -38,10 +42,10 @@ public class CityRepository {
             e.printStackTrace();
         }
 
-        // Si pas trouvée
+        /*// Si pas trouvée
         if (city == null) {
             city = new City(0, "Inconnue");
-        }
+        }*/
 
         return city;
     }

@@ -24,7 +24,7 @@ public class CollectRepository {
     public List<Collect> findAll() {
         List<Collect> collects = new ArrayList<>();
         String query = "SELECT c.id AS collect_id, c.City_id AS city_id, c.volunteer_id, c.date, " +
-                "cw.id AS waste_id, cw.Waste_Type_id AS waste_type_id, cw.quantity " +
+                "cw.id AS waste_id, cw.Waste_Type_id AS Waste_Type_id, cw.quantity " +
                 "FROM Collect c " +
                 "LEFT JOIN Collect_waste cw ON c.id = cw.collect_id";
 
@@ -53,12 +53,12 @@ public class CollectRepository {
                 }
 
                 // Ajoute le déchet à la collecte
-                if (rs.getInt("collect_waste_id") > 0) {
+                if (rs.getObject("waste_id") != null) {
                     collect.getWastes().add(new Collect_waste(
-                            rs.getInt("collect_waste_id"),
+                            rs.getInt("cw.waste_id"),
                             collectId,
-                            rs.getInt("waste_type_id"),
-                            rs.getInt("quantity")
+                            rs.getInt("cw.waste_type_id"),
+                            rs.getInt("cw.quantity")
                     ));
                 }
             }
@@ -70,17 +70,19 @@ public class CollectRepository {
 
     public Collect save(Collect collect) {
         String insertCollectQuery = "INSERT INTO Collect (city_id, volunteer_id, date) VALUES (?, ?, ?)";
-        String insertCollectWasteQuery = "INSERT INTO Collect_waste (collect_id, waste_type_id, quantity) VALUES (?, ?, ?)";
+        String insertCollectWasteQuery = "INSERT INTO Collect_waste (collect_id, Waste_Type_id, quantity) VALUES (?, ?, ?)";
         try (Connection con = dataSource.getConnection()) {
             // Désactive l'auto-commit pour gérer la transaction manuellement
             con.setAutoCommit(false);
             try (PreparedStatement collectStmt = con.prepareStatement(insertCollectQuery, Statement.RETURN_GENERATED_KEYS);
                  PreparedStatement collectWasteStmt = con.prepareStatement(insertCollectWasteQuery)) {
+
                 // Insertion de la collecte
                 collectStmt.setInt(1, collect.getCityId());
                 collectStmt.setObject(2, collect.getVolunteerId(), Types.INTEGER);
                 collectStmt.setDate(3, new java.sql.Date(collect.getDate().getTime()));
                 collectStmt.executeUpdate();
+
                 // Récupération de l'ID généré pour la collecte
                 ResultSet generatedKeys = collectStmt.getGeneratedKeys();
                 int collectId = -1;
@@ -89,9 +91,13 @@ public class CollectRepository {
                 }
                 // Insertion des déchets associés
                 for (Collect_waste waste : collect.getWastes()) {
+                    System.out.println("ID: " + waste.getId() + ", Type: " + waste.getWaste_Type_Id() + ", Quantité: " + waste.getQuantity());
+                }
+                for (Collect_waste waste : collect.getWastes()) {
                     collectWasteStmt.setInt(1, collectId);
                     collectWasteStmt.setInt(2, waste.getWaste_Type_Id());
                     collectWasteStmt.setInt(3, waste.getQuantity());
+                    System.out.println(collectWasteStmt);
                     collectWasteStmt.executeUpdate();
                 }
                 // Valide la transaction
