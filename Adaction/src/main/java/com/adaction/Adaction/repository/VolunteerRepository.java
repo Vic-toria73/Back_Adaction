@@ -9,6 +9,7 @@ import javax.sql.DataSource;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public class VolunteerRepository {
@@ -24,13 +25,18 @@ public class VolunteerRepository {
 
     public List<Volunteers> findAll() {
         List<Volunteers> volunteersList = new ArrayList<>();
+        String sql = "SELECT * FROM volunteers";
+
         try (Connection con = dataSource.getConnection();
-             Statement smt = con.createStatement();
-             ResultSet rs = smt.executeQuery("SELECT * FROM volunteers")) {
+             Statement stmt = con.createStatement();
+             ResultSet rs = stmt.executeQuery(sql)) {
 
             while (rs.next()) {
                 int cityId = rs.getInt("city_ID");
-                City city = cityRepository.findById(cityId);
+                // Utiliser findById pour récupérer la ville par son ID
+                Optional<City> cityOpt = Optional.ofNullable(cityRepository.findById(cityId));
+                City city = cityOpt.orElseThrow(() -> new RuntimeException("Ville introuvable avec ID = " + cityId));
+
                 Volunteers volunteer = new Volunteers(
                         rs.getInt("id"),
                         rs.getString("firstname"),
@@ -41,10 +47,82 @@ public class VolunteerRepository {
                 );
                 volunteersList.add(volunteer);
             }
+
         } catch (SQLException e) {
-            // En production, utilise un logger plutôt que printStackTrace
             e.printStackTrace();
         }
+
         return volunteersList;
+    }
+
+    public Volunteers save(Volunteers volunteer) {
+        // Vérifier que le bénévole a une ville valide
+        City city = volunteer.getCity();
+        if (city == null || city.getId() <= 0) {
+            throw new RuntimeException("Le bénévole doit avoir une ville avec un ID valide.");
+        }
+
+        // Vérifier si la ville existe déjà en DB
+        City cityFromDb = cityRepository.findById(city.getId()); // retourne null si non trouvé
+        if (cityFromDb != null) {
+            volunteer.setCity(cityFromDb);
+        } else {
+            // Ville inexistante → insérer dans DB
+            City savedCity = cityRepository.save(city);
+            if (savedCity.getId() <= 0) {
+                throw new RuntimeException("Impossible d'insérer la ville avec ID fourni : " + city.getId());
+            }
+            volunteer.setCity(savedCity);
+            System.out.println("Ville créée avec ID = " + savedCity.getId());
+        }
+
+        // Préparer l'insertion du bénévole dans la DB
+        String sql = "INSERT INTO volunteers (firstname, lastname, mail, password, city_ID, created_at, updated_at) " +
+                "VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+
+            pstmt.setString(1, volunteer.getFirstname());
+            pstmt.setString(2, volunteer.getLastname());
+            pstmt.setString(3, volunteer.getMail());
+            pstmt.setString(4, volunteer.getPassword());
+            pstmt.setInt(5, volunteer.getCity().getId());
+
+            pstmt.executeUpdate();
+
+            // Récupérer l'ID généré pour le bénévole
+            try (ResultSet rs = pstmt.getGeneratedKeys()) {
+                if (rs.next()) {
+                    volunteer.setId(rs.getInt(1));
+                    System.out.println("Bénévole inséré avec ID = " + volunteer.getId());
+                } else {
+                    throw new RuntimeException("Impossible de récupérer l'ID du bénévole");
+                }
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            throw new RuntimeException("Erreur SQL lors de l'insertion du bénévole", e);
+        }
+
+        return volunteer;
+    }
+
+    public boolean deleteById(int id) {
+        String sql = "DELETE FROM volunteers WHERE id = ?";
+
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql)) {
+
+            pstmt.setInt(1, id);
+            int rowsAffected = pstmt.executeUpdate();
+
+            return rowsAffected > 0; // true si un bénévole a été supprimé
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

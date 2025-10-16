@@ -1,7 +1,7 @@
 package com.adaction.Adaction.model;
 
 
-
+import org.checkerframework.checker.units.qual.C;
 
 public class Volunteers {
     private int id;
@@ -9,20 +9,19 @@ public class Volunteers {
     private String lastname;
     private String mail;
     private String password;
-    private int city_ID;
+   // private int collect_volunteer_ID;
+    private City city;
 
     public Volunteers() {}
 
-    public Volunteers(int id, String firstname, String lastname, String mail, String password, int city_ID) {
+    public Volunteers(int id, String firstname, String lastname, String mail, String password, City city) {
         this.id = id;
         this.firstname = firstname;
         this.lastname = lastname;
         this.mail = mail;
         this.password = password;
-        this.city_ID = city_ID;
-    }
-
-    public Volunteers(int id, String firstname, String lastname, String mail, String password, City city) {
+       // this.collect_volunteer_ID = collect_volunteer_ID;
+        this.city = city;
     }
 
     public int getId() { return id; }
@@ -40,6 +39,13 @@ public class Volunteers {
     public String getPassword() { return password; }
     public void setPassword(String password) { this.password = password; }
 
-    public int getCity_ID() { return city_ID; }
-    public void setCity_ID(int city_ID) { this.city_ID = city_ID; }
+   // public int getCollect_volunteerID() { return collect_volunteer_ID; }
+   // public void setCollect_volunteerID(int collect_volunteer_ID) { this.collect_volunteer_ID = collect_volunteer_ID; }
+
+    public City getCity() { return city; }
+    public void setCity(City city) { this.city = city; }
+
+    public int getCityId() {
+        return city != null ? city.getId() : 0;
+    }
 }
