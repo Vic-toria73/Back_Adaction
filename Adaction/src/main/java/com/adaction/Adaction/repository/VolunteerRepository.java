@@ -118,11 +118,39 @@ public class VolunteerRepository {
             pstmt.setInt(1, id);
             int rowsAffected = pstmt.executeUpdate();
 
-            return rowsAffected > 0; // true si un bénévole a été supprimé
+            return rowsAffected > 0; // true si un benevole a été supprimé
 
         } catch (SQLException e) {
             e.printStackTrace();
             return false;
         }
+    }
+
+//pour récuperer un bénévole par son email
+    public Optional<Volunteers> findByMail(String mail) {
+        String sql = "SELECT * FROM volunteers WHERE mail = ?";
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql)) {
+            pstmt.setString(1, mail);
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int cityId = rs.getInt("city_ID");
+                    Optional<City> cityOpt = Optional.ofNullable(cityRepository.findById(cityId));
+                    City city = cityOpt.orElseThrow(() -> new RuntimeException("Ville introuvable avec ID = " + cityId));
+                    Volunteers volunteer = new Volunteers(
+                            rs.getInt("id"),
+                            rs.getString("firstname"),
+                            rs.getString("lastname"),
+                            rs.getString("mail"),
+                            rs.getString("password"),
+                            city
+                    );
+                    return Optional.of(volunteer);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
     }
 }

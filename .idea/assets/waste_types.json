@@ -1,0 +1,46 @@
+{
+  "waste_types": [
+    {
+      "id": "1",
+      "value": "cigarette",
+      "label": "🚬 Mégots de cigarette",
+      "className": "badge-cigarette",
+      "quantity": 0
+    },
+    {
+      "id": "2",
+      "value": "plastic",
+      "label": "🥤 Plastique",
+      "className": "badge-plastic",
+      "quantity": 0
+    },
+    {
+      "id": "3",
+      "value": "glass",
+      "label": "🍶 Verre",
+      "className": "badge-glass",
+      "quantity": 0
+    },
+    {
+      "id": "4",
+      "value": "metal",
+      "label": "🥫 Métal",
+      "className": "badge-metal",
+      "quantity": 0
+    },
+    {
+      "id": "5",
+      "value": "electronic",
+      "label": "📱 Électronique",
+      "className": "badge-electronic",
+      "quantity": 0
+    },
+    {
+      "id": "6",
+      "value": "other",
+      "label": "❓ Autre",
+      "className": "badge-other",
+      "quantity": 0
+    }
+  ]
+}
