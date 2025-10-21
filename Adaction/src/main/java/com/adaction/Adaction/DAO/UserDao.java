@@ -21,7 +21,7 @@ public class UserDao {
         return results.isEmpty() ? null : results.get(0);
     }
 
-    public Map<String, Object> findVolunteerByFirstname(String firstname) {
+    public Map<String, Object> findVolunteersByFirstname(String firstname) {
         String sql = "SELECT * FROM volunteers WHERE firstname = ?";
         List<Map<String, Object>> results = jdbcTemplate.queryForList(sql, firstname);
         return results.isEmpty() ? null : results.get(0);

@@ -37,7 +37,7 @@ public class LoginController {
         }
 
         // Sinon vérifie dans la table volunteers
-        Map<String, Object> vol = userDao.findVolunteerByFirstname(request.getfirstname());
+        Map<String, Object> vol = userDao.findVolunteersByFirstname(request.getfirstname());
         if (vol != null) {
             String password = (String) vol.get("password");
             if (passwordEncoder.matches(request.getPassword(), password)) {
