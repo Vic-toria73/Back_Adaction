@@ -1,16 +1,16 @@
 package com.adaction.Adaction.dto;
 
 public class LoginRequest {
-    private String mail;
+    private String firstname;
     private String password;
 
     // Getters et setters
-    public String getMail() {
-        return mail;
+    public String getfirstname() {
+        return firstname;
     }
 
-    public void setMail(String mail) {
-        this.mail = mail;
+    public void setfirstname(String firstname) {
+        this.firstname = firstname;
     }
 
     public String getPassword() {
