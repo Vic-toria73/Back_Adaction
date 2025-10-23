@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "http://localhost:5173", allowCredentials = "true")
 @RestController
 @RequestMapping("/api")
 public class LoginController {
@@ -32,7 +32,12 @@ public class LoginController {
             if (passwordEncoder.matches(request.getPassword(), password)) {
                 session.setAttribute("role", "ADMIN");
                 session.setAttribute("firstname", admin.get("firstname"));
-                return ResponseEntity.ok(Map.of("message", "Connexion réussie", "role", "ADMIN"));
+                session.setAttribute("userId", admin.get("id"));
+                return ResponseEntity.ok(Map.of(
+                        "message", "Connexion réussie",
+                        "role", "ADMIN",
+                        "id", admin.get("id")
+                ));
             }
         }
 
@@ -43,7 +48,12 @@ public class LoginController {
             if (passwordEncoder.matches(request.getPassword(), password)) {
                 session.setAttribute("role", "VOLONTAIRE");
                 session.setAttribute("firstname", vol.get("firstname"));
-                return ResponseEntity.ok(Map.of("message", "Connexion réussie", "role", "VOLONTAIRE"));
+                session.setAttribute("volunteerId", vol.get("id"));
+                return ResponseEntity.ok(Map.of(
+                        "message", "Connexion réussie",
+                        "role", "VOLONTAIRE",
+                        "id", vol.get("id")
+                ));
             }
         }
 
@@ -56,11 +66,17 @@ public class LoginController {
     public ResponseEntity<?> currentUser(HttpSession session) {
         String role = (String) session.getAttribute("role");
         String firstname = (String) session.getAttribute("firstname");
+        Object id = session.getAttribute("volunteerId"); // ou "userId" pour admin
 
         if (role == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Non connecté"));
         }
-        return ResponseEntity.ok(Map.of("firstname", firstname, "role", role));
+
+        return ResponseEntity.ok(Map.of(
+                "firstname", firstname,
+                "role", role,
+                "id", id
+        ));
     }
 }
