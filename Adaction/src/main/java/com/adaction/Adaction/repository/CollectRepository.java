@@ -69,7 +69,52 @@ public class CollectRepository {
         }
         return collects;
     }
+    public List<Collect> findByVolunteerId(int volunteerId) {
+        List<Collect> collects = new ArrayList<>();
+        String query = "SELECT c.id AS collect_id, c.city_id AS city_id, c.volunteer_id, c.date, " +
+                "cw.id AS waste_id, cw.Waste_Type_id AS Waste_Type_id, cw.quantity " +
+                "FROM Collect c " +
+                "LEFT JOIN Collect_waste cw ON c.id = cw.collect_id " +
+                "WHERE c.volunteer_id = ?";
 
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement stmt = con.prepareStatement(query)) {
+
+            stmt.setInt(1, volunteerId);
+            ResultSet rs = stmt.executeQuery();
+
+            Map<Integer, Collect> collectMap = new HashMap<>();
+
+            while (rs.next()) {
+                int collectId = rs.getInt("collect_id");
+                Collect collect = collectMap.get(collectId);
+
+                if (collect == null) {
+                    collect = new Collect(
+                            collectId,
+                            rs.getInt("city_id"),
+                            rs.getInt("volunteer_id"),
+                            rs.getDate("date"),
+                            new ArrayList<>()
+                    );
+                    collectMap.put(collectId, collect);
+                    collects.add(collect);
+                }
+
+                if (rs.getObject("waste_id") != null) {
+                    collect.getWastes().add(new Collect_waste(
+                            rs.getInt("waste_id"),
+                            collectId,
+                            rs.getInt("Waste_Type_id"),
+                            rs.getInt("quantity")
+                    ));
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return collects;
+    }
     /**
      * Sauvegarde une collecte et ses déchets associés en une seule transaction.
      */

@@ -33,7 +33,6 @@ public class VolunteerRepository {
 
             while (rs.next()) {
                 int cityId = rs.getInt("city_ID");
-                // Utiliser findById pour récupérer la ville par son ID
                 Optional<City> cityOpt = Optional.ofNullable(cityRepository.findById(cityId));
                 City city = cityOpt.orElseThrow(() -> new RuntimeException("Ville introuvable avec ID = " + cityId));
 
@@ -55,70 +54,113 @@ public class VolunteerRepository {
         return volunteersList;
     }
 
+    public Optional<Volunteers> findById(int id) {
+        String sql = "SELECT * FROM volunteers WHERE id = ?";
+        try (Connection con = dataSource.getConnection();
+             PreparedStatement pstmt = con.prepareStatement(sql)) {
+            pstmt.setInt(1, id);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int cityId = rs.getInt("city_ID");
+                    Optional<City> cityOpt = Optional.ofNullable(cityRepository.findById(cityId));
+                    City city = cityOpt.orElseThrow(() -> new RuntimeException("Ville introuvable avec ID = " + cityId));
+
+                    Volunteers volunteer = new Volunteers(
+                            rs.getInt("id"),
+                            rs.getString("firstname"),
+                            rs.getString("lastname"),
+                            rs.getString("mail"),
+                            rs.getString("password"),
+                            city
+                    );
+                    return Optional.of(volunteer);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return Optional.empty();
+    }
+
     public Volunteers save(Volunteers volunteer) {
-        // Vérifier que le bénévole a une ville valide
         City city = volunteer.getCity();
         if (city == null || city.getId() <= 0) {
             throw new RuntimeException("Le bénévole doit avoir une ville avec un ID valide.");
         }
 
-        // Vérifier si la ville existe déjà en DB
-        City cityFromDb = cityRepository.findById(city.getId()); // retourne null si non trouvé
+        // On récupère la ville existante
+        City cityFromDb = cityRepository.findById(city.getId());
         if (cityFromDb != null) {
             volunteer.setCity(cityFromDb);
         } else {
-            // Ville inexistante → insérer dans DB
             City savedCity = cityRepository.save(city);
-            if (savedCity.getId() <= 0) {
-                throw new RuntimeException("Impossible d'insérer la ville avec ID fourni : " + city.getId());
-            }
             volunteer.setCity(savedCity);
-            System.out.println("Ville créée avec ID = " + savedCity.getId());
         }
 
-        // Préparer l'insertion du bénévole dans la DB
-        String sql = "INSERT INTO volunteers (firstname, lastname, mail, password, city_ID, created_at, updated_at) " +
-                "VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+        if (volunteer.getId() > 0) {
+            // UPDATE si ID existant
+            String sql = "UPDATE volunteers SET firstname = ?, lastname = ?, mail = ?, password = ?, city_ID = ?, updated_at = NOW() WHERE id = ?";
+            try (Connection con = dataSource.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement(sql)) {
 
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
+                pstmt.setString(1, volunteer.getFirstname());
+                pstmt.setString(2, volunteer.getLastname());
+                pstmt.setString(3, volunteer.getMail());
+                pstmt.setString(4, volunteer.getPassword());
+                pstmt.setInt(5, volunteer.getCity().getId());
+                pstmt.setInt(6, volunteer.getId());
 
-            pstmt.setString(1, volunteer.getFirstname());
-            pstmt.setString(2, volunteer.getLastname());
-            pstmt.setString(3, volunteer.getMail());
-            pstmt.setString(4, volunteer.getPassword());
-            pstmt.setInt(5, volunteer.getCity().getId());
-
-            pstmt.executeUpdate();
-
-            // Récupérer l'ID généré pour le bénévole
-            try (ResultSet rs = pstmt.getGeneratedKeys()) {
-                if (rs.next()) {
-                    volunteer.setId(rs.getInt(1));
-                    System.out.println("Bénévole inséré avec ID = " + volunteer.getId());
-                } else {
-                    throw new RuntimeException("Impossible de récupérer l'ID du bénévole");
-                }
+                pstmt.executeUpdate();
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new RuntimeException("Erreur SQL lors de la mise à jour du bénévole", e);
             }
+        } else {
+            // INSERT si pas d'ID
+            String sql = "INSERT INTO volunteers (firstname, lastname, mail, password, city_ID, created_at, updated_at) " +
+                    "VALUES (?, ?, ?, ?, ?, NOW(), NOW())";
+            try (Connection con = dataSource.getConnection();
+                 PreparedStatement pstmt = con.prepareStatement(sql, Statement.RETURN_GENERATED_KEYS)) {
 
-        } catch (SQLException e) {
-            e.printStackTrace();
-            throw new RuntimeException("Erreur SQL lors de l'insertion du bénévole", e);
+                pstmt.setString(1, volunteer.getFirstname());
+                pstmt.setString(2, volunteer.getLastname());
+                pstmt.setString(3, volunteer.getMail());
+                pstmt.setString(4, volunteer.getPassword());
+                pstmt.setInt(5, volunteer.getCity().getId());
+
+                pstmt.executeUpdate();
+
+                try (ResultSet rs = pstmt.getGeneratedKeys()) {
+                    if (rs.next()) {
+                        volunteer.setId(rs.getInt(1));
+                    }
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                throw new RuntimeException("Erreur SQL lors de l'insertion du bénévole", e);
+            }
         }
 
         return volunteer;
     }
-
     public boolean deleteById(int id) {
-        String sql = "DELETE FROM volunteers WHERE id = ?";
+        try (Connection con = dataSource.getConnection()) {
 
-        try (Connection con = dataSource.getConnection();
-             PreparedStatement pstmt = con.prepareStatement(sql)) {
+            // Supprimer toutes les collectes du bénévole
+            String sqlCollect = "DELETE FROM Collect WHERE volunteer_id = ?";
+            try (PreparedStatement pstmt = con.prepareStatement(sqlCollect)) {
+                pstmt.setInt(1, id);
+                pstmt.executeUpdate();
+            }
 
-            pstmt.setInt(1, id);
-            int rowsAffected = pstmt.executeUpdate();
-
-            return rowsAffected > 0; // true si un benevole a été supprimé
+            // Supprimer le bénévole
+            String sqlVolunteer = "DELETE FROM volunteers WHERE id = ?";
+            try (PreparedStatement pstmt = con.prepareStatement(sqlVolunteer)) {
+                pstmt.setInt(1, id);
+                int rowsAffected = pstmt.executeUpdate();
+                return rowsAffected > 0;
+            }
 
         } catch (SQLException e) {
             e.printStackTrace();
@@ -126,7 +168,6 @@ public class VolunteerRepository {
         }
     }
 
-//pour récuperer un bénévole par son email
     public Optional<Volunteers> findByMail(String mail) {
         String sql = "SELECT * FROM volunteers WHERE mail = ?";
         try (Connection con = dataSource.getConnection();
@@ -137,6 +178,7 @@ public class VolunteerRepository {
                     int cityId = rs.getInt("city_ID");
                     Optional<City> cityOpt = Optional.ofNullable(cityRepository.findById(cityId));
                     City city = cityOpt.orElseThrow(() -> new RuntimeException("Ville introuvable avec ID = " + cityId));
+
                     Volunteers volunteer = new Volunteers(
                             rs.getInt("id"),
                             rs.getString("firstname"),
